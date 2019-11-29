@@ -16,7 +16,6 @@ public class MainActivity extends AppCompatActivity implements FingerPrintAuthCa
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         mFingerPrintAuthHelper = FingerPrintAuthHelper.getHelper(this, this);
         mFingerPrintAuthHelper.startAuth();
         super.onCreate(savedInstanceState);
@@ -32,21 +31,16 @@ public class MainActivity extends AppCompatActivity implements FingerPrintAuthCa
 
     @Override
     public void onNoFingerPrintHardwareFound() {
-        //Device does not have finger print scanner.
-        Toast.makeText(this, "no Cool", Toast.LENGTH_SHORT).show();
-
+        Toast.makeText(this, "Your device doesn't support fingerprint authentication", Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onNoFingerPrintRegistered() {
-        //There are no finger prints registered on this device.
-        Toast.makeText(this, "no Cool", Toast.LENGTH_SHORT).show();
-
     }
 
     @Override
     public void onBelowMarshmallow() {
-        //Device running below API 23 version of android that does not support finger print authentication.
+        Toast.makeText(this, "Your device doesn't support fingerprint authentication", Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -62,13 +56,13 @@ public class MainActivity extends AppCompatActivity implements FingerPrintAuthCa
     public void onAuthFailed(int errorCode, String errorMessage) {
         switch (errorCode) {    //Parse the error code for recoverable/non recoverable error.
             case AuthErrorCodes.CANNOT_RECOGNIZE_ERROR:
-                //Cannot recognize the fingerprint scanned.
+                Toast.makeText(this, "Cannot recognize the fingerprint", Toast.LENGTH_SHORT).show();
                 break;
             case AuthErrorCodes.NON_RECOVERABLE_ERROR:
                 //This is not recoverable error. Try other options for user authentication. like pin, password.
                 break;
             case AuthErrorCodes.RECOVERABLE_ERROR:
-                //Any recoverable error. Display message to the user.
+                Toast.makeText(this, "Cannot recognize the fingerprint", Toast.LENGTH_SHORT).show();
                 break;
         }
     }
