@@ -23,6 +23,7 @@ import org.osmdroid.events.DelayedMapListener;
 import org.osmdroid.events.MapListener;
 import org.osmdroid.events.ScrollEvent;
 import org.osmdroid.events.ZoomEvent;
+import org.osmdroid.tileprovider.constants.OpenStreetMapTileProviderConstants;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
@@ -109,26 +110,27 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
                 }
             }
             if (somePermissionWasDenied) {
-                Toast.makeText(this, "Cant load maps without all the permissions granted", Toast.LENGTH_SHORT).show();
+                showToast("Cant load maps without all the permissions granted");
             } else {
                 setupMap();
             }
         } else {
-            Toast.makeText(this, "Cant load maps without all the permissions granted", Toast.LENGTH_SHORT).show();
+            showToast("Cant load maps without all the permissions granted");
         }
     }
 
-    private void setupMap() {
+    private void showToast(String text) {
+        Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
+    }
 
+    private void setupMap() {
+        OpenStreetMapTileProviderConstants.setUserAgentValue(BuildConfig.APPLICATION_ID);
         mapView = findViewById(R.id.mapview);
         mapView.setClickable(true);
         mapView.setBuiltInZoomControls(true);
-        //setContentView(mapView); //displaying the MapView
 
-        mapView.getController().setZoom(15); //set initial zoom-level, depends on your need
-        //mapView.getController().setCenter(ONCATIVO);
-        //mapView.setUseDataConnection(false); //keeps the mapView from loading online tiles using network connection.
-        mapView.setTileSource(TileSourceFactory.DEFAULT_TILE_SOURCE);
+        mapView.getController().setZoom(15);
+        mapView.setTileSource(TileSourceFactory.MAPNIK);
 
         MyLocationNewOverlay oMapLocationOverlay = new MyLocationNewOverlay(getApplicationContext(), mapView);
         mapView.getOverlays().add(oMapLocationOverlay);
@@ -136,10 +138,12 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
         oMapLocationOverlay.enableMyLocation();
         oMapLocationOverlay.enableFollowLocation();
 
-        CompassOverlay compassOverlay = new CompassOverlay(this, mapView);
-        compassOverlay.enableCompass();
-        mapView.getOverlays().add(compassOverlay);
+        createCompassOverlay();
 
+        addOnMapActionListeners();
+    }
+
+    private void addOnMapActionListeners() {
         mapView.setMapListener(new DelayedMapListener(new MapListener() {
             public boolean onZoom(final ZoomEvent e) {
                 MapView mapView = findViewById(R.id.mapview);
@@ -173,13 +177,19 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
         }, 1000));
     }
 
+    private void createCompassOverlay() {
+        CompassOverlay compassOverlay = new CompassOverlay(this, mapView);
+        compassOverlay.enableCompass();
+        mapView.getOverlays().add(compassOverlay);
+    }
+
     protected void onStart() {
-//        mGoogleApiClient.connect();
+        mGoogleApiClient.connect();
         super.onStart();
     }
 
     protected void onStop() {
-//        mGoogleApiClient.disconnect();
+        mGoogleApiClient.disconnect();
         super.onStop();
     }
 
@@ -187,17 +197,18 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
         if (mLastLocation != null) {
             mapView.getController().setCenter(new GeoPoint(mLastLocation.getLatitude(), mLastLocation.getLongitude()));
         } else {
-            Toast.makeText(this, "Getting current location", Toast.LENGTH_SHORT).show();
+            showToast("Getting current location");
         }
     }
 
     @Override
     public void onConnected(Bundle connectionHint) {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        boolean hasFineLocPerm = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        boolean hasCoarseLocPerm = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        if (!hasFineLocPerm && !hasCoarseLocPerm)
             return;
-        }
-        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
 
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
     }
 
     @Override
@@ -220,11 +231,11 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_settings)
             return true;
-        } else if (id == R.id.action_locate) {
+
+        if (id == R.id.action_locate)
             setCenterInMyCurrentLocation();
-        }
 
         return super.onOptionsItemSelected(item);
     }
